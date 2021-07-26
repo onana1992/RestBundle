@@ -1,0 +1,1068 @@
+	  /**
+     * @GET("/product/model/category/order-by-price-asc/{id_category}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductByCategory2Action($id_category,$min,$max,$page,Request $request)
+     {  
+		$formatted=[];
+		$allProducts = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idCategory')->equals($id_category)
+                      ->getQuery()
+                      ->execute();
+		$m=0;
+		foreach($allProducts as $product){
+			 $m++;
+		} 
+		
+		if($min!="null" && $max!="null" ){	
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idCategory')->equals($id_category)
+					  ->field('actualPrice')->range(floatval($min),floatval($max))
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}			  
+		else{
+		
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idCategory')->equals($id_category)
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}
+
+		
+		foreach($products as $product){
+		
+			
+		    $productCaracteristics = $product->getProductCaracteristics();
+			$modelCaracteristics = $product->getModelCaracteristics();
+			$details = $product->getDetails();
+			$retailSale= $product->getRetailSale();
+			$formattedProductCar =[];
+			$formattedModelCar =[];
+			$formattedDetail=[];
+			
+			$marque= $product->getMarque();
+			$formattedMarque =[
+			 'id' => $marque->getId(),
+			 'name'=> $marque->getName(),
+			 'idLogo'=> $marque->getIdLogo()
+			];
+			
+			$retailSale = $product->getRetailSale();
+			if($retailSale!= "null"){
+				$date= $retailSale->getEndPromotionDate();
+				$formattedRetailSale=[
+					'price'=> $retailSale->getPrice(),
+					'quantity'=>$retailSale->getQuantity(),
+					'isInPromotion'=>$retailSale->getIsinPromotion(),
+					'promotionalPrice'=> $retailSale->getPromotionalPrice(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			$wholeSale = $product->getWholeSale();
+			if($wholeSale!= "null"){
+				$date= $wholeSale->getEndPromotionDate();
+				$formattedWholeSale=[
+					'price'=> $wholeSale->getPrice(),
+					'quantity'=>$wholeSale->getQuantity(),
+					'isInPromotion'=>$wholeSale->getIsinPromotion(),
+					'promotionalPrice'=> $wholeSale->getPromotionalPrice(),
+					'lotQuantity' => $wholeSale->getLotQuantity(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			foreach($productCaracteristics as $productCaracteristic ){
+				$formattedProductCar[] =[
+				'id' => $productCaracteristic->getId(),
+				'name' => $productCaracteristic->getName(),
+				'unity' => $productCaracteristic->getUnity(),
+				'value' => $productCaracteristic->getValue()
+				];
+			}
+
+			foreach($modelCaracteristics as $modelCaracteristic){
+				$formattedModelCar[] =[
+				'id' => $modelCaracteristic->getId(),
+				'name' => $modelCaracteristic->getName(),
+				'unity' => $modelCaracteristic->getUnity(),
+				'value' => $modelCaracteristic->getValue()
+				];
+			}
+			
+			foreach($details as $detail){
+				$formattedDetail[] =[
+				'name' => $detail->getName(),
+				'value' => $detail->getValue()
+				];
+			}
+			 
+			 
+		     $formatted[] =[
+			 'id'=>	$product->getId(),
+             'name' => $product->getName(),
+			 'description' => $product->getDescription(),
+			 'idCategory' => $product->getIdCategory(),
+			 'idScategory' => $product->getIdScategory(),
+			 'idSScategory' => $product->getIdSScategory(),
+			 'idImage'=> $product->getIdImage(),
+			 'idBigImage1'=> $product->getIdBigImage1(),
+			 'idBigImage2'=> $product->getIdBigImage2(),
+			 'idBigImage3'=> $product->getIdBigImage3(),
+			 'idBigImage4'=> $product->getIdBigImage4(),
+			 'detail' => $formattedDetail,
+			 'productCar' => $formattedProductCar,
+			 'modelCar' =>	$formattedModelCar,
+			 'retailSale' => $formattedRetailSale,
+			 'wholeSale'=> $formattedWholeSale,
+			 'marque'=> $formattedMarque
+           ]; 
+		} 
+		 $response = [
+        'status' => '200',
+		'size'=> $m,
+		'data' => $formatted,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	}
+	 
+	  /**
+     * @GET("/product/model/category/order-by-price-desc/{id_category}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductByCategory3Action($id_category,$min,$max,$page,Request $request)
+     {  
+	
+	/*********************************************************************************************************************************************************/	 
+/*************************************************************subcategory retrieving request**************************************************************/	 
+	 
+	 
+	 /**
+     * @GET("/product/model/scategory/order-by-rescent/{id_scategory}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductBySCategory1Action($id_scategory,$min,$max,$page,Request $request)
+     {  
+		$formatted=[];
+		$allProducts = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+                      ->getQuery()
+                      ->execute();
+		$m=0;
+		foreach($allProducts as $product){
+			 $m++;
+		} 
+		 if($min!="null" && $max!="null" ){		  
+		 $products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+					  ->field('actualPrice')->range(floatval($min),floatval($max))
+					  ->sort('insertionDate', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}
+		else{
+		$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+					  ->sort('insertionDate', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		
+		}
+		foreach($products as $product){
+		    $productCaracteristics = $product->getProductCaracteristics();
+			$modelCaracteristics = $product->getModelCaracteristics();
+			$details = $product->getDetails();
+			$retailSale= $product->getRetailSale();
+			$formattedProductCar =[];
+			$formattedModelCar =[];
+			$formattedDetail=[];
+			
+			$marque= $product->getMarque();
+			$formattedMarque =[
+			 'id' => $marque->getId(),
+			 'name'=> $marque->getName(),
+			 'idLogo'=> $marque->getIdLogo()
+			];
+			
+			$retailSale = $product->getRetailSale();
+			if($retailSale!= "null"){
+				$date= $retailSale->getEndPromotionDate();
+				$formattedRetailSale=[
+					'price'=> $retailSale->getPrice(),
+					'quantity'=>$retailSale->getQuantity(),
+					'isInPromotion'=>$retailSale->getIsinPromotion(),
+					'promotionalPrice'=> $retailSale->getPromotionalPrice(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			$wholeSale = $product->getWholeSale();
+			if($wholeSale!= "null"){
+				$date= $wholeSale->getEndPromotionDate();
+				$formattedWholeSale=[
+					'price'=> $wholeSale->getPrice(),
+					'quantity'=>$wholeSale->getQuantity(),
+					'isInPromotion'=>$wholeSale->getIsinPromotion(),
+					'promotionalPrice'=> $wholeSale->getPromotionalPrice(),
+					'lotQuantity' => $wholeSale->getLotQuantity(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			foreach($productCaracteristics as $productCaracteristic ){
+				$formattedProductCar[] =[
+				'id' => $productCaracteristic->getId(),
+				'name' => $productCaracteristic->getName(),
+				'unity' => $productCaracteristic->getUnity(),
+				'value' => $productCaracteristic->getValue()
+				];
+			}
+
+			foreach($modelCaracteristics as $modelCaracteristic){
+				$formattedModelCar[] =[
+				'id' => $modelCaracteristic->getId(),
+				'name' => $modelCaracteristic->getName(),
+				'unity' => $modelCaracteristic->getUnity(),
+				'value' => $modelCaracteristic->getValue()
+				];
+			}
+			
+			foreach($details as $detail){
+				$formattedDetail[] =[
+				'name' => $detail->getName(),
+				'value' => $detail->getValue()
+				];
+			}
+			 
+			 
+		     $formatted[] =[
+			 'id'=>	$product->getId(),
+             'name' => $product->getName(),
+			 'description' => $product->getDescription(),
+			 'idCategory' => $product->getIdCategory(),
+			 'idScategory' => $product->getIdScategory(),
+			 'idSScategory' => $product->getIdSScategory(),
+			 'idImage'=> $product->getIdImage(),
+			 'idBigImage1'=> $product->getIdBigImage1(),
+			 'idBigImage2'=> $product->getIdBigImage2(),
+			 'idBigImage3'=> $product->getIdBigImage3(),
+			 'idBigImage4'=> $product->getIdBigImage4(),
+			 'detail' => $formattedDetail,
+			 'productCar' => $formattedProductCar,
+			 'modelCar' =>	$formattedModelCar,
+			 'retailSale' => $formattedRetailSale,
+			 'wholeSale'=> $formattedWholeSale,
+			 'marque'=> $formattedMarque
+           ]; 
+		} 
+		 $response = [
+        'status' => '200',
+		'size'=> $m,
+		'data' => $formatted,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	 }
+	 
+	  /**
+     * @GET("/product/model/scategory/order-by-price-asc/{id_scategory}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductBySCategory2Action($id_scategory,$min,$max,$page,Request $request)
+     {  
+		$formatted=[];
+		$allProducts = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+                      ->getQuery()
+                      ->execute();
+		$m=0;
+		foreach($allProducts as $product){
+			 $m++;
+		} 
+		
+		if($min!="null" && $max!="null" ){	
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+					  ->field('actualPrice')->range(floatval($min),floatval($max))
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}			  
+		else{
+		
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}
+
+		
+		foreach($products as $product){
+		
+			
+		    $productCaracteristics = $product->getProductCaracteristics();
+			$modelCaracteristics = $product->getModelCaracteristics();
+			$details = $product->getDetails();
+			$retailSale= $product->getRetailSale();
+			$formattedProductCar =[];
+			$formattedModelCar =[];
+			$formattedDetail=[];
+			
+			$marque= $product->getMarque();
+			$formattedMarque =[
+			 'id' => $marque->getId(),
+			 'name'=> $marque->getName(),
+			 'idLogo'=> $marque->getIdLogo()
+			];
+			
+			$retailSale = $product->getRetailSale();
+			if($retailSale!= "null"){
+				$date= $retailSale->getEndPromotionDate();
+				$formattedRetailSale=[
+					'price'=> $retailSale->getPrice(),
+					'quantity'=>$retailSale->getQuantity(),
+					'isInPromotion'=>$retailSale->getIsinPromotion(),
+					'promotionalPrice'=> $retailSale->getPromotionalPrice(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			$wholeSale = $product->getWholeSale();
+			if($wholeSale!= "null"){
+				$date= $wholeSale->getEndPromotionDate();
+				$formattedWholeSale=[
+					'price'=> $wholeSale->getPrice(),
+					'quantity'=>$wholeSale->getQuantity(),
+					'isInPromotion'=>$wholeSale->getIsinPromotion(),
+					'promotionalPrice'=> $wholeSale->getPromotionalPrice(),
+					'lotQuantity' => $wholeSale->getLotQuantity(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			foreach($productCaracteristics as $productCaracteristic ){
+				$formattedProductCar[] =[
+				'id' => $productCaracteristic->getId(),
+				'name' => $productCaracteristic->getName(),
+				'unity' => $productCaracteristic->getUnity(),
+				'value' => $productCaracteristic->getValue()
+				];
+			}
+
+			foreach($modelCaracteristics as $modelCaracteristic){
+				$formattedModelCar[] =[
+				'id' => $modelCaracteristic->getId(),
+				'name' => $modelCaracteristic->getName(),
+				'unity' => $modelCaracteristic->getUnity(),
+				'value' => $modelCaracteristic->getValue()
+				];
+			}
+			
+			foreach($details as $detail){
+				$formattedDetail[] =[
+				'name' => $detail->getName(),
+				'value' => $detail->getValue()
+				];
+			}
+			 
+			 
+		     $formatted[] =[
+			 'id'=>	$product->getId(),
+             'name' => $product->getName(),
+			 'description' => $product->getDescription(),
+			 'idCategory' => $product->getIdCategory(),
+			 'idScategory' => $product->getIdScategory(),
+			 'idSScategory' => $product->getIdSScategory(),
+			 'idImage'=> $product->getIdImage(),
+			 'idBigImage1'=> $product->getIdBigImage1(),
+			 'idBigImage2'=> $product->getIdBigImage2(),
+			 'idBigImage3'=> $product->getIdBigImage3(),
+			 'idBigImage4'=> $product->getIdBigImage4(),
+			 'detail' => $formattedDetail,
+			 'productCar' => $formattedProductCar,
+			 'modelCar' =>	$formattedModelCar,
+			 'retailSale' => $formattedRetailSale,
+			 'wholeSale'=> $formattedWholeSale,
+			 'marque'=> $formattedMarque
+           ]; 
+		} 
+		 $response = [
+        'status' => '200',
+		'size'=> $m,
+		'data' => $formatted,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	}
+	 
+	  /**
+     * @GET("/product/model/scategory/order-by-price-desc/{id_scategory}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductBySCategory3Action($id_scategory,$min,$max,$page,Request $request)
+     {  
+		$formatted=[];
+		$allProducts = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+                      ->getQuery()
+                      ->execute();
+		$m=0;
+		foreach($allProducts as $product){
+			 $m++;
+		} 
+		
+		if($min!="null" && $max!="null" ){	
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+					  ->field('actualPrice')->range(floatval($min),floatval($max))
+					  ->sort('actualPrice', 'desc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}			  
+		else{
+		
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idScategory')->equals($id_scategory)
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}
+
+		
+		foreach($products as $product){
+		
+			
+		    $productCaracteristics = $product->getProductCaracteristics();
+			$modelCaracteristics = $product->getModelCaracteristics();
+			$details = $product->getDetails();
+			$retailSale= $product->getRetailSale();
+			$formattedProductCar =[];
+			$formattedModelCar =[];
+			$formattedDetail=[];
+			
+			$marque= $product->getMarque();
+			$formattedMarque =[
+			 'id' => $marque->getId(),
+			 'name'=> $marque->getName(),
+			 'idLogo'=> $marque->getIdLogo()
+			];
+			
+			$retailSale = $product->getRetailSale();
+			if($retailSale!= "null"){
+				$date= $retailSale->getEndPromotionDate();
+				$formattedRetailSale=[
+					'price'=> $retailSale->getPrice(),
+					'quantity'=>$retailSale->getQuantity(),
+					'isInPromotion'=>$retailSale->getIsinPromotion(),
+					'promotionalPrice'=> $retailSale->getPromotionalPrice(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			$wholeSale = $product->getWholeSale();
+			if($wholeSale!= "null"){
+				$date= $wholeSale->getEndPromotionDate();
+				$formattedWholeSale=[
+					'price'=> $wholeSale->getPrice(),
+					'quantity'=>$wholeSale->getQuantity(),
+					'isInPromotion'=>$wholeSale->getIsinPromotion(),
+					'promotionalPrice'=> $wholeSale->getPromotionalPrice(),
+					'lotQuantity' => $wholeSale->getLotQuantity(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			foreach($productCaracteristics as $productCaracteristic ){
+				$formattedProductCar[] =[
+				'id' => $productCaracteristic->getId(),
+				'name' => $productCaracteristic->getName(),
+				'unity' => $productCaracteristic->getUnity(),
+				'value' => $productCaracteristic->getValue()
+				];
+			}
+
+			foreach($modelCaracteristics as $modelCaracteristic){
+				$formattedModelCar[] =[
+				'id' => $modelCaracteristic->getId(),
+				'name' => $modelCaracteristic->getName(),
+				'unity' => $modelCaracteristic->getUnity(),
+				'value' => $modelCaracteristic->getValue()
+				];
+			}
+			
+			foreach($details as $detail){
+				$formattedDetail[] =[
+				'name' => $detail->getName(),
+				'value' => $detail->getValue()
+				];
+			}
+			 
+			 
+		     $formatted[] =[
+			 'id'=>	$product->getId(),
+             'name' => $product->getName(),
+			 'description' => $product->getDescription(),
+			 'idCategory' => $product->getIdCategory(),
+			 'idScategory' => $product->getIdScategory(),
+			 'idSScategory' => $product->getIdSScategory(),
+			 'idImage'=> $product->getIdImage(),
+			 'idBigImage1'=> $product->getIdBigImage1(),
+			 'idBigImage2'=> $product->getIdBigImage2(),
+			 'idBigImage3'=> $product->getIdBigImage3(),
+			 'idBigImage4'=> $product->getIdBigImage4(),
+			 'detail' => $formattedDetail,
+			 'productCar' => $formattedProductCar,
+			 'modelCar' =>	$formattedModelCar,
+			 'retailSale' => $formattedRetailSale,
+			 'wholeSale'=> $formattedWholeSale,
+			 'marque'=> $formattedMarque
+           ]; 
+		} 
+		 $response = [
+        'status' => '200',
+		'size'=> $m,
+		'data' => $formatted,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	}
+	 
+
+	
+	
+	
+	
+	/**
+     * @GET("/product/model/textsearch/{text}/{n}")
+	 * url-parm: id_scategory(String) , n(String)
+	 * return of a product of a subsubcategory
+     */
+	public function getProductByTextAction($text,$n,Request $request)
+    {  
+		
+		$dm= $this->get('doctrine_mongodb')->getManager();
+		$mongoCollection = $dm->getDocumentCollection('RestBundle:ProductModel')->getMongoCollection();
+		$formatted=[];
+		$criteria= array('$text' => array('$search'=>$text));
+		$option=array('score' => array('$meta' => 'textScore'));
+		$cursor= $mongoCollection->find($criteria,$option);
+		$cursor = $cursor->sort(array('score' => array('$meta' => 'textScore')));
+		$cursor->limit($n*4)->skip($n);
+		$i=0;
+		$products=null;
+		$formatted=[];
+		while ($product = $cursor->getNext())
+		{
+			$formatted[] = [
+			 'id'=>	$product['_id'],
+             'name' => $product['name'],
+			 'description' => $product['description'],
+			 'idCategory' => $product['idCategory'],
+			 'idScategory' => $product['idScategory'],
+			 'idSScategory' => $product['idScategory'],
+			 'caracteristics' => $product['caracteristic'],
+			 'Score'=> $product['score'],
+			 'idImage1'=> $product['idImage1'],
+			 'idImage2'=> $product['idImage2'],
+			 'idImage3'=> $product['idImage3'],
+			 'idImage4'=> $product['idImage4'],
+            ];
+			$products[$i]= $product;
+			 $i++;
+		 
+		}
+		
+		if ($i==0){
+				$formatted =[
+				'status'=> 404
+				];
+				header('Access-Control-Allow-Origin: *');
+				return new JsonResponse($formatted);
+		}
+		
+		//var_dump($formatted);
+		$response = [
+        'status' => '200',
+		'size'=> $i,
+		'data' => $products,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	}
+	 
+/*********************************************************************************************************************************************************/	 
+/*************************************************************sub subcategory retrieving request**************************************************************/
+	 /**
+     * @GET("/product/model/sscategory/order-by-rescent/{id_sscategory}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductBySSCategory1Action($id_sscategory,$min,$max,$page,Request $request)
+     {  
+		$formatted=[];
+		$allProducts = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+                      ->getQuery()
+                      ->execute();
+		$m=0;
+		foreach($allProducts as $product){
+			 $m++;
+		} 
+		 if($min!="null" && $max!="null" ){		  
+		 $products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+					  ->field('actualPrice')->range(floatval($min),floatval($max))
+					  ->sort('insertionDate', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}
+		else{
+		$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+					  ->sort('insertionDate', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		
+		}
+		foreach($products as $product){
+		    $productCaracteristics = $product->getProductCaracteristics();
+			$modelCaracteristics = $product->getModelCaracteristics();
+			$details = $product->getDetails();
+			$retailSale= $product->getRetailSale();
+			$formattedProductCar =[];
+			$formattedModelCar =[];
+			$formattedDetail=[];
+			
+			$marque= $product->getMarque();
+			$formattedMarque =[
+			 'id' => $marque->getId(),
+			 'name'=> $marque->getName(),
+			 'idLogo'=> $marque->getIdLogo()
+			];
+			
+			$retailSale = $product->getRetailSale();
+			if($retailSale!= "null"){
+				$date= $retailSale->getEndPromotionDate();
+				$formattedRetailSale=[
+					'price'=> $retailSale->getPrice(),
+					'quantity'=>$retailSale->getQuantity(),
+					'isInPromotion'=>$retailSale->getIsinPromotion(),
+					'promotionalPrice'=> $retailSale->getPromotionalPrice(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			$wholeSale = $product->getWholeSale();
+			if($wholeSale!= "null"){
+				$date= $wholeSale->getEndPromotionDate();
+				$formattedWholeSale=[
+					'price'=> $wholeSale->getPrice(),
+					'quantity'=>$wholeSale->getQuantity(),
+					'isInPromotion'=>$wholeSale->getIsinPromotion(),
+					'promotionalPrice'=> $wholeSale->getPromotionalPrice(),
+					'lotQuantity' => $wholeSale->getLotQuantity(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			foreach($productCaracteristics as $productCaracteristic ){
+				$formattedProductCar[] =[
+				'id' => $productCaracteristic->getId(),
+				'name' => $productCaracteristic->getName(),
+				'unity' => $productCaracteristic->getUnity(),
+				'value' => $productCaracteristic->getValue()
+				];
+			}
+
+			foreach($modelCaracteristics as $modelCaracteristic){
+				$formattedModelCar[] =[
+				'id' => $modelCaracteristic->getId(),
+				'name' => $modelCaracteristic->getName(),
+				'unity' => $modelCaracteristic->getUnity(),
+				'value' => $modelCaracteristic->getValue()
+				];
+			}
+			
+			foreach($details as $detail){
+				$formattedDetail[] =[
+				'name' => $detail->getName(),
+				'value' => $detail->getValue()
+				];
+			}
+			 
+			 
+		     $formatted[] =[
+			 'id'=>	$product->getId(),
+             'name' => $product->getName(),
+			 'description' => $product->getDescription(),
+			 'idCategory' => $product->getIdCategory(),
+			 'idScategory' => $product->getIdScategory(),
+			 'idSScategory' => $product->getIdSScategory(),
+			 'idImage'=> $product->getIdImage(),
+			 'idBigImage1'=> $product->getIdBigImage1(),
+			 'idBigImage2'=> $product->getIdBigImage2(),
+			 'idBigImage3'=> $product->getIdBigImage3(),
+			 'idBigImage4'=> $product->getIdBigImage4(),
+			 'detail' => $formattedDetail,
+			 'productCar' => $formattedProductCar,
+			 'modelCar' =>	$formattedModelCar,
+			 'retailSale' => $formattedRetailSale,
+			 'wholeSale'=> $formattedWholeSale,
+			 'marque'=> $formattedMarque
+           ]; 
+		} 
+		 $response = [
+        'status' => '200',
+		'size'=> $m,
+		'data' => $formatted,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	 }
+	 
+	  /**
+     * @GET("/product/model/sscategory/order-by-price-asc/{id_sscategory}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductBySSCategory2Action($id_sscategory,$min,$max,$page,Request $request)
+     {  
+		$formatted=[];
+		$allProducts = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+                      ->getQuery()
+                      ->execute();
+		$m=0;
+		foreach($allProducts as $product){
+			 $m++;
+		} 
+		
+		if($min!="null" && $max!="null" ){	
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+					  ->field('actualPrice')->range(floatval($min),floatval($max))
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}			  
+		else{
+		
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}
+
+		
+		foreach($products as $product){
+		
+			
+		    $productCaracteristics = $product->getProductCaracteristics();
+			$modelCaracteristics = $product->getModelCaracteristics();
+			$details = $product->getDetails();
+			$retailSale= $product->getRetailSale();
+			$formattedProductCar =[];
+			$formattedModelCar =[];
+			$formattedDetail=[];
+			
+			$marque= $product->getMarque();
+			$formattedMarque =[
+			 'id' => $marque->getId(),
+			 'name'=> $marque->getName(),
+			 'idLogo'=> $marque->getIdLogo()
+			];
+			
+			$retailSale = $product->getRetailSale();
+			if($retailSale!= "null"){
+				$date= $retailSale->getEndPromotionDate();
+				$formattedRetailSale=[
+					'price'=> $retailSale->getPrice(),
+					'quantity'=>$retailSale->getQuantity(),
+					'isInPromotion'=>$retailSale->getIsinPromotion(),
+					'promotionalPrice'=> $retailSale->getPromotionalPrice(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			$wholeSale = $product->getWholeSale();
+			if($wholeSale!= "null"){
+				$date= $wholeSale->getEndPromotionDate();
+				$formattedWholeSale=[
+					'price'=> $wholeSale->getPrice(),
+					'quantity'=>$wholeSale->getQuantity(),
+					'isInPromotion'=>$wholeSale->getIsinPromotion(),
+					'promotionalPrice'=> $wholeSale->getPromotionalPrice(),
+					'lotQuantity' => $wholeSale->getLotQuantity(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			foreach($productCaracteristics as $productCaracteristic ){
+				$formattedProductCar[] =[
+				'id' => $productCaracteristic->getId(),
+				'name' => $productCaracteristic->getName(),
+				'unity' => $productCaracteristic->getUnity(),
+				'value' => $productCaracteristic->getValue()
+				];
+			}
+
+			foreach($modelCaracteristics as $modelCaracteristic){
+				$formattedModelCar[] =[
+				'id' => $modelCaracteristic->getId(),
+				'name' => $modelCaracteristic->getName(),
+				'unity' => $modelCaracteristic->getUnity(),
+				'value' => $modelCaracteristic->getValue()
+				];
+			}
+			
+			foreach($details as $detail){
+				$formattedDetail[] =[
+				'name' => $detail->getName(),
+				'value' => $detail->getValue()
+				];
+			}
+			 
+			 
+		     $formatted[] =[
+			 'id'=>	$product->getId(),
+             'name' => $product->getName(),
+			 'description' => $product->getDescription(),
+			 'idCategory' => $product->getIdCategory(),
+			 'idScategory' => $product->getIdScategory(),
+			 'idSScategory' => $product->getIdSScategory(),
+			 'idImage'=> $product->getIdImage(),
+			 'idBigImage1'=> $product->getIdBigImage1(),
+			 'idBigImage2'=> $product->getIdBigImage2(),
+			 'idBigImage3'=> $product->getIdBigImage3(),
+			 'idBigImage4'=> $product->getIdBigImage4(),
+			 'detail' => $formattedDetail,
+			 'productCar' => $formattedProductCar,
+			 'modelCar' =>	$formattedModelCar,
+			 'retailSale' => $formattedRetailSale,
+			 'wholeSale'=> $formattedWholeSale,
+			 'marque'=> $formattedMarque
+           ]; 
+		} 
+		 $response = [
+        'status' => '200',
+		'size'=> $m,
+		'data' => $formatted,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	}
+	 
+	  /**
+     * @GET("/product/model/sscategory/order-by-price-desc/{id_sscategory}/{page}/{min}/{max}")
+	 * url-parm: id_category(String) , n(String)
+	 * return of a product of a category oder by most recently added
+     */
+	 public function getProductBySSCategory3Action($id_sscategory,$min,$max,$page,Request $request)
+     {  
+		$formatted=[];
+		$allProducts = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+                      ->getQuery()
+                      ->execute();
+		$m=0;
+		foreach($allProducts as $product){
+			 $m++;
+		} 
+		
+		if($min!="null" && $max!="null" ){	
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+					  ->field('actualPrice')->range(floatval($min),floatval($max))
+					  ->sort('actualPrice', 'desc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}			  
+		else{
+		
+			$products = $this->get('doctrine_mongodb')
+                      ->getManager()
+                      ->createQueryBuilder('RestBundle:ProductModel')
+                      ->field('idSScategory')->equals($id_sscategory)
+					  ->sort('actualPrice', 'asc')
+					  ->skip(15*($page-1))
+                      ->limit(15)
+                      ->getQuery()
+                      ->execute();
+		}
+
+		
+		foreach($products as $product){
+		
+			
+		    $productCaracteristics = $product->getProductCaracteristics();
+			$modelCaracteristics = $product->getModelCaracteristics();
+			$details = $product->getDetails();
+			$retailSale= $product->getRetailSale();
+			$formattedProductCar =[];
+			$formattedModelCar =[];
+			$formattedDetail=[];
+			
+			$marque= $product->getMarque();
+			$formattedMarque =[
+			 'id' => $marque->getId(),
+			 'name'=> $marque->getName(),
+			 'idLogo'=> $marque->getIdLogo()
+			];
+			
+			$retailSale = $product->getRetailSale();
+			if($retailSale!= "null"){
+				$date= $retailSale->getEndPromotionDate();
+				$formattedRetailSale=[
+					'price'=> $retailSale->getPrice(),
+					'quantity'=>$retailSale->getQuantity(),
+					'isInPromotion'=>$retailSale->getIsinPromotion(),
+					'promotionalPrice'=> $retailSale->getPromotionalPrice(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			$wholeSale = $product->getWholeSale();
+			if($wholeSale!= "null"){
+				$date= $wholeSale->getEndPromotionDate();
+				$formattedWholeSale=[
+					'price'=> $wholeSale->getPrice(),
+					'quantity'=>$wholeSale->getQuantity(),
+					'isInPromotion'=>$wholeSale->getIsinPromotion(),
+					'promotionalPrice'=> $wholeSale->getPromotionalPrice(),
+					'lotQuantity' => $wholeSale->getLotQuantity(),
+					'endPromotionDate'=> $date
+				];
+			}
+			
+			foreach($productCaracteristics as $productCaracteristic ){
+				$formattedProductCar[] =[
+				'id' => $productCaracteristic->getId(),
+				'name' => $productCaracteristic->getName(),
+				'unity' => $productCaracteristic->getUnity(),
+				'value' => $productCaracteristic->getValue()
+				];
+			}
+
+			foreach($modelCaracteristics as $modelCaracteristic){
+				$formattedModelCar[] =[
+				'id' => $modelCaracteristic->getId(),
+				'name' => $modelCaracteristic->getName(),
+				'unity' => $modelCaracteristic->getUnity(),
+				'value' => $modelCaracteristic->getValue()
+				];
+			}
+			
+			foreach($details as $detail){
+				$formattedDetail[] =[
+				'name' => $detail->getName(),
+				'value' => $detail->getValue()
+				];
+			}
+			 
+			 
+		     $formatted[] =[
+			 'id'=>	$product->getId(),
+             'name' => $product->getName(),
+			 'description' => $product->getDescription(),
+			 'idCategory' => $product->getIdCategory(),
+			 'idScategory' => $product->getIdScategory(),
+			 'idSScategory' => $product->getIdSScategory(),
+			 'idImage'=> $product->getIdImage(),
+			 'idBigImage1'=> $product->getIdBigImage1(),
+			 'idBigImage2'=> $product->getIdBigImage2(),
+			 'idBigImage3'=> $product->getIdBigImage3(),
+			 'idBigImage4'=> $product->getIdBigImage4(),
+			 'detail' => $formattedDetail,
+			 'productCar' => $formattedProductCar,
+			 'modelCar' =>	$formattedModelCar,
+			 'retailSale' => $formattedRetailSale,
+			 'wholeSale'=> $formattedWholeSale,
+			 'marque'=> $formattedMarque
+           ]; 
+		} 
+		 $response = [
+        'status' => '200',
+		'size'=> $m,
+		'data' => $formatted,
+		];
+	   header('Access-Control-Allow-Origin: *');
+	   return new JsonResponse($response);
+	}
+	 

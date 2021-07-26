@@ -1,0 +1,59 @@
+<?php
+namespace RestBundle\Document;
+use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Security\Core\User\UserInterface;
+
+
+ /**
+  * @MongoDB\EmbeddedDocument 
+  */ 
+class LivraisonAdress{
+
+    /**
+     * @MongoDB\Id
+     */
+    private $id;
+	
+	/**
+     * @MongoDB\Field(type="string")
+     */
+		protected $idProduct;
+	
+	/**
+     * @MongoDB\Field(type="string")
+     */
+     protected $nameReceptionist;
+	 
+	/**
+     * @MongoDB\Field(type="string")
+     */
+     protected $secondNameReceptionist;
+	 
+	/**
+     * @MongoDB\Field(type="string")
+     */
+     protected $telephone1Receptionist;
+	 
+	/**
+     * @MongoDB\Field(type="string")
+     */
+     protected $telephone2Receptionist;
+	 
+	/**
+     * @MongoDB\Field(type="string")
+     */
+     protected $region;
+	 
+	/**
+     * @MongoDB\Field(type="string")
+     */
+     protected $town;
+	 
+	/**
+     * @MongoDB\Field(type="string")
+     */
+     protected $adresse;
+
+    
+}
